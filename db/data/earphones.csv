@@ -1,0 +1,8 @@
+tier_name,tier_color,brand,model,price,is_collaboration,bass,mids,treble,tonality,technicality,total_score
+S,#FFD700,Moondrop,Variations,500,false,9.50,9.20,9.10,9.30,9.40,9.30
+S,#FFD700,DUNU,SA6 MK2,550,false,9.20,9.40,9.00,9.50,9.10,9.24
+A,#C0C0C0,Moondrop,Blessing 3,320,false,8.50,8.80,8.60,8.90,8.40,8.64
+A,#C0C0C0,7Hz,Timeless AE,220,true,8.80,8.20,8.40,8.30,9.00,8.54
+B,#CD7F32,KZ,ZSN Pro X,25,false,7.50,7.00,7.20,7.10,6.80,7.12
+B,#CD7F32,Tripowin,Mele,40,false,7.20,7.40,7.10,7.30,7.00,7.20
+C,#6E6E6E,Sony,MH755,20,false,6.50,6.80,6.20,6.70,6.00,6.44

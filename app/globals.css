@@ -1,26 +1,136 @@
 @import "tailwindcss";
 
+/* =============================================================
+   globals.css — Global Theme: Red / White / Black
+   =============================================================
+
+   WHAT IS THIS FILE?
+     The root stylesheet for the entire application.
+     Every page inherits these styles. It defines:
+       1. CSS custom properties (variables) for colors
+       2. Font stack configuration via Tailwind's @theme
+       3. Custom scrollbar styling
+       4. Smooth transitions for heatmap color changes
+       5. Number input spinner removal
+
+   THEME: High-Contrast White
+     - Background: pure white (#ffffff)
+     - Text: pure black (#000000)
+     - Accents: deep red (red-950, red-900, red-700)
+     - Borders: black or very dark gray
+
+   WHY @import "tailwindcss"?
+     This is Tailwind CSS v4 syntax. It imports the entire Tailwind
+     framework — all utility classes (bg-red-500, text-white, p-4, etc.)
+     become available in every component. In v4, you no longer need
+     a tailwind.config.js file — configuration is done inline.
+   ============================================================= */
+
+/* ── CSS Custom Properties ──────────────────────────────────── */
+/* These are "variables" that other CSS rules can reference.
+   var(--background) resolves to #ffffff everywhere it's used.
+
+   WHY USE VARIABLES?
+     If we want to change the background from white to cream,
+     we change it in ONE place (here) and it updates everywhere.
+     Without variables, we'd search-and-replace across the entire codebase. */
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #000000;
 }
 
+/* ── Tailwind Theme Configuration ───────────────────────────── */
+/* @theme inline tells Tailwind v4 to register these as theme tokens.
+   This means:
+     bg-background → background-color: #ffffff
+     text-foreground → color: #000000
+     font-sans → the Inter/Geist font stack
+     font-mono → the Geist Mono monospace font
+
+   These tokens integrate with Tailwind's utility system,
+   so you can use them like any built-in Tailwind class. */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter), var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* ── Base Body Styles ───────────────────────────────────────── */
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+}
+
+/* =============================================================
+   Custom Scrollbar Styling
+   =============================================================
+   Makes scrollbars thinner and darker to match the technical
+   aesthetic without being distracting.
+
+   `scrollbar-width: thin` = Firefox
+   `::-webkit-scrollbar` = Chrome, Edge, Safari
+   ============================================================= */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #d4d4d8 transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #d4d4d8;
+  border-radius: 3px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #a1a1aa;
+}
+
+/* =============================================================
+   Heatmap Transition
+   =============================================================
+   When a user edits a score cell and the heatmap color changes
+   (e.g., from bg-red-300 to bg-red-700), this transition makes
+   the color shift smooth (300ms fade) instead of an instant snap.
+
+   The selector [class*="bg-red-"] matches any element whose class
+   attribute contains "bg-red-" — which covers all our heatmap cells.
+
+   `transition: background-color 300ms ease, color 300ms ease`
+     - `background-color` — animate the background
+     - `color` — animate the text color (changes from black to white)
+     - `300ms` — animation duration
+     - `ease` — start slow, speed up, slow down at end
+   ============================================================= */
+[class*="bg-red-"] {
+  transition: background-color 300ms ease, color 300ms ease;
+}
+
+/* =============================================================
+   Remove Number Input Spinners
+   =============================================================
+   By default, <input type="number"> shows tiny up/down arrow
+   buttons (spinners) in most browsers. In our dense grid cells,
+   these are too small to click and visually noisy. We remove them.
+
+   - `::-webkit-outer-spin-button` / `::-webkit-inner-spin-button` = Chrome, Edge
+   - `-moz-appearance: textfield` = Firefox
+   ============================================================= */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
 }
