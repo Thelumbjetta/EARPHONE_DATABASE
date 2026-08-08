@@ -475,7 +475,25 @@ export default function TierListEditor({ data }: Props) {
           </div>
 
           {/* ── UNRANKED POOL ──────────────────────────────────────────────── */}
-          <UnrankedPool items={zones['unranked'] ?? []} />
+          <UnrankedPool
+            items={zones['unranked'] ?? []}
+            onAddGear={(gear) => {
+              const newItem: DraggableItem = {
+                id: `gear-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+                earphoneId: 9999,
+                brand: gear.brand,
+                model: gear.model,
+                price: gear.price,
+                userStars: 8.5,
+                graphUrl: gear.graph_url,
+                userNotes: `${gear.driver_type} transducer. Automated graph from database.`,
+              };
+              setZones((prev) => ({
+                ...prev,
+                unranked: [newItem, ...(prev.unranked || [])],
+              }));
+            }}
+          />
         </div>
       </div>
 

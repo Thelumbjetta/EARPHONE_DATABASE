@@ -36,16 +36,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
-
-// ── Font Loading ──────────────────────────────────────────────
-//
-// `next/font/google` automatically downloads and self-hosts Google
-// Fonts. This means:
-//   1. No external network requests at runtime (faster page loads).
-//   2. No FOUT (Flash of Unstyled Text) — fonts are available immediately.
-//   3. The `variable` option creates a CSS custom property
-//      (e.g., --font-inter) that can be referenced in globals.css.
-// ──────────────────────────────────────────────────────────────
+import Navbar from "@/components/Navbar";
+import Providers from "@/components/Providers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -62,17 +54,9 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
-// ── Page Metadata ─────────────────────────────────────────────
-//
-// Generates the <title> and <meta name="description"> tags.
-// These appear in:
-//   - Browser tab title
-//   - Search engine results (Google, Bing)
-//   - Social media link previews
-// ──────────────────────────────────────────────────────────────
 export const metadata: Metadata = {
-  title: "HBB IEM Database",
-  description: "High-density interactive IEM tier list and review database by HBB.",
+  title: "audiothread — Audiophile Communities, Gear Discussions & Tier Lists",
+  description: "Crowdsourced audiophile community hub for IEMs, headphones, sound impressions, and tier lists.",
 };
 
 export default function RootLayout({
@@ -84,11 +68,34 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-      /* ↑ antialiased: Enables font smoothing for sharper text rendering.
-           h-full: Makes <html> take up the full viewport height. */
     >
-      <body className="min-h-full flex flex-col bg-white text-black">
-        {children}
+      <body className="min-h-full flex flex-col bg-[#f4f6f8] text-[#111827] selection:bg-[#10b981]/20 selection:text-[#10b981]">
+        <Providers>
+          {/* Sticky Global Top Header */}
+          <Navbar />
+
+          {/* Main Content Area — pt-20 guarantees zero top clipping under sticky navbar */}
+          <div className="flex-1 w-full max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-12">
+            {children}
+          </div>
+
+          {/* audiothread Footer */}
+          <footer className="w-full border-t border-[#eaefec] bg-white py-6 mt-12 text-xs text-gray-500 font-sans">
+            <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+              <div className="flex items-center gap-2 font-medium">
+                <span className="w-2 h-2 rounded-full bg-[#10b981]" />
+                <span className="font-bold text-[#111827]">audiothread</span>
+                <span>&bull; Audiophile Discussions & Community Hub</span>
+              </div>
+              <div className="flex items-center gap-6 font-medium text-gray-500">
+                <a href="/r" className="hover:text-[#10b981] transition-colors">Popular</a>
+                <a href="/r/all" className="hover:text-[#10b981] transition-colors">Communities</a>
+                <a href="/tier-lists" className="hover:text-[#10b981] transition-colors">Tier Lists</a>
+                <a href="/messages" className="hover:text-[#10b981] transition-colors">Messages</a>
+              </div>
+            </div>
+          </footer>
+        </Providers>
       </body>
     </html>
   );

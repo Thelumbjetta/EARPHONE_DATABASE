@@ -262,7 +262,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             // The values array: $1 in the SQL gets replaced with this value.
             // We use .toLowerCase() to make login case-insensitive
             // (so "Alice@Example.com" matches "alice@example.com").
-            [credentials.email.toLowerCase()]
+            [String(credentials.email).toLowerCase()]
           );
 
           // result.rows is an array. result.rows[0] is the first (and only) row.

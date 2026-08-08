@@ -111,6 +111,25 @@ const migrationFiles = [
   '007_create_tier_lists.sql',  // Tier list containers (FK → users)
   '008_create_list_tiers.sql',  // Dynamic tier rows per list (FK → tier_lists)
   '009_create_tier_list_items.sql', // Earphones placed in tiers (FK → list_tiers, earphones)
+
+  // ── Forum & Extended Catalog schema ──────────────────────────────────────
+  // These three migrations expand the schema to support the audiophile
+  // community forum. They must run AFTER 004–009 because they reference
+  // or ALTER tables created in those earlier migrations.
+  //
+  //   010 depends on 004  (ALTER TABLE users; creates audio_gear — no FK deps)
+  //   011 depends on 004  (threads.user_id → users.id)
+  //              and no dep on 010 (forum_categories is standalone)
+  //   012 depends on 006  (ALTER TABLE comments)
+  //              and 007  (ALTER TABLE tier_lists)
+  //              and 011  (comments.thread_id → threads.id)
+
+  '010_expand_users_and_audio_gear.sql', // Adds reputation/post_count/avatar_url/bio to users; creates audio_gear catalog
+  '011_create_forum_schema.sql',         // Creates forum_categories and threads tables
+  '012_extend_comments_for_threads.sql', // Adds thread_id + media_url to comments; adds category to tier_lists
+  '013_make_comment_post_id_nullable.sql', // Makes comments.post_id nullable to allow thread-only replies
+  '014_support_media_urls.sql',          // Adds media_urls array to threads/comments, graph_url to audio_gear
+  '015_reddit_pivot_and_notifications.sql', // Reddit pivot: communities, votes, karma, and notifications schema
 ];
 
 

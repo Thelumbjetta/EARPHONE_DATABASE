@@ -125,6 +125,7 @@ export interface DraggableItem {
   price: number;            // Display: price in dollars
   userStars: number | null; // Display: star rating, or null
   userNotes: string | null; // Display: notes text, or null
+  graphUrl?: string | null; // Frequency response graph URL
 }
 
 

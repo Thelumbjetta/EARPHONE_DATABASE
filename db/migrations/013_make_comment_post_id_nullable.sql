@@ -1,0 +1,47 @@
+-- =============================================================
+-- Migration 013: Make `comments.post_id` nullable
+-- =============================================================
+--
+-- WHY THIS MIGRATION IS NEEDED:
+--
+--   Migration 006 created the `comments` table with:
+--     post_id INTEGER NOT NULL REFERENCES posts(id)
+--
+--   Migration 012 added `thread_id` to comments so that replies
+--   can belong to EITHER a forum thread OR an old-style post.
+--
+--   The problem: a comment linked to a `thread` has NO `post_id`
+--   to reference — it's a thread reply, not a post reply.
+--   But the NOT NULL constraint on `post_id` FORCES every comment
+--   to have a post_id, which breaks the dual-target design.
+--
+-- THE FIX:
+--   Remove the NOT NULL constraint from `post_id` using:
+--     ALTER TABLE comments ALTER COLUMN post_id DROP NOT NULL;
+--
+--   After this migration:
+--   - Old comments (post replies):   post_id = <id>, thread_id = NULL  ✅
+--   - New thread replies:             post_id = NULL, thread_id = <id> ✅
+--
+-- APPLICATION-LAYER RULE (enforced in API, not DB):
+--   A comment must have at least one of post_id OR thread_id set.
+--   Both NULL is invalid and prevented in the API route handler.
+--   The DB allows it at the schema level for simplicity.
+--
+-- WHAT IS "ALTER COLUMN ... DROP NOT NULL"?
+--   This changes the column's constraint from "must have a value"
+--   to "may be NULL (no value)." It does NOT affect any existing rows.
+--   Existing rows with a post_id value keep that value unchanged.
+--   New rows can now legally set post_id = NULL.
+--
+-- DEPENDENCY ORDER:
+--   Must run AFTER:
+--     006_create_comments.sql  (the table we're altering)
+--     012_extend_comments_for_threads.sql  (added thread_id, the motivation)
+-- =============================================================
+
+-- Drop the NOT NULL constraint from post_id.
+-- Existing post-linked comments are unaffected — their post_id stays set.
+-- New thread-linked comments can now be inserted with post_id = NULL.
+ALTER TABLE comments
+  ALTER COLUMN post_id DROP NOT NULL;
