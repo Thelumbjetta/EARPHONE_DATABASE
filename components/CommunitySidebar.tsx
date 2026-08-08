@@ -26,12 +26,7 @@ type MiniGearItem = {
   tier: string;
 };
 
-const AUDIOPHILE_COMMUNITIES = [
-  { name: 'r/audiophile', slug: 'audiophile', members: '3.2M members', bgColor: 'bg-[#10b981]', Icon: Headphones },
-  { name: 'r/iem', slug: 'iem', members: '1.8M members', bgColor: 'bg-[#1e293b]', Icon: Radio },
-  { name: 'r/budgettier', slug: 'budgettier', members: '850k members', bgColor: 'bg-[#0284c7]', Icon: Zap },
-  { name: 'r/headphonezone', slug: 'headphonezone', members: '1.1M members', bgColor: 'bg-[#d97706]', Icon: Volume2 },
-];
+
 
 export default function CommunitySidebar({ community }: { community?: CommunityDetail }) {
   const { data: session } = useSession();
@@ -42,6 +37,7 @@ export default function CommunitySidebar({ community }: { community?: CommunityD
   const [topRankings, setTopRankings] = useState<MiniGearItem[]>([]);
   const [loadingTierList, setLoadingTierList] = useState(true);
   const [isKarmaModalOpen, setIsKarmaModalOpen] = useState(false);
+  const [popularCommunities, setPopularCommunities] = useState<CommunityDetail[]>([]);
 
   const activeSlug = community?.slug || 'audiophile';
 
@@ -60,6 +56,22 @@ export default function CommunitySidebar({ community }: { community?: CommunityD
     }
     loadStats();
   }, [session]);
+
+  // Fetch Popular Communities
+  useEffect(() => {
+    async function loadPopular() {
+      try {
+        const res = await fetch('/api/communities/popular');
+        if (res.ok) {
+          const data = await res.json();
+          setPopularCommunities(data);
+        }
+      } catch (err) {
+        console.warn('Failed to load popular communities:', err);
+      }
+    }
+    loadPopular();
+  }, []);
 
   // Fetch Top 3 Tier List Leaderboard from consensus API
   useEffect(() => {
@@ -139,32 +151,36 @@ export default function CommunitySidebar({ community }: { community?: CommunityD
           </Link>
         </div>
 
-        <div className="space-y-3.5">
-          {AUDIOPHILE_COMMUNITIES.map((c) => {
-            const joined = !!joinedSubs[c.name];
-            const IconComponent = c.Icon;
+        <div className="space-y-0.5">
+          {popularCommunities.map((c) => {
+            const joined = !!joinedSubs[c.name || ''];
             return (
-              <div key={c.name} className="flex items-center justify-between">
-                <Link href={`/r/${c.slug}`} className="flex items-center gap-3 group">
-                  <div className={`w-8 h-8 rounded-full ${c.bgColor} text-white flex items-center justify-center font-bold text-xs shadow-sm group-hover:scale-105 transition-all duration-200 ease-in-out`}>
-                    <IconComponent className="w-4 h-4 text-white" />
+              <div key={c.slug} className="flex items-center justify-between px-3 py-2.5 -mx-3 rounded-xl hover:bg-gray-50 transition-colors">
+                <Link href={`/r/${c.slug}`} className="flex items-center gap-3 group flex-1">
+                  <div className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center font-bold text-xs text-gray-500 overflow-hidden">
+                    {c.icon_url ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img src={c.icon_url} alt={c.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="uppercase">{c.name?.replace('r/', '').charAt(0)}</span>
+                    )}
                   </div>
                   <div>
-                    <span className="font-bold text-xs text-[#111827] block group-hover:text-[#10b981] transition-all duration-200 ease-in-out">
+                    <span className="font-bold text-xs text-[#111827] block group-hover:text-[#10b981] transition-colors">
                       {c.name}
                     </span>
                     <span className="text-[10px] text-gray-400 font-normal">
-                      {c.members}
+                      {formatNumber(c.member_count || 1)} members
                     </span>
                   </div>
                 </Link>
 
                 <button
-                  onClick={() => toggleJoinSub(c.name)}
-                  className={`text-xs font-bold px-4 py-1 rounded-full transition-all duration-200 ease-in-out cursor-pointer active:scale-95 ${
+                  onClick={() => toggleJoinSub(c.name || '')}
+                  className={`text-[10px] font-bold px-3 py-1.5 rounded-full transition-colors cursor-pointer ${
                     joined
                       ? 'bg-[#e6f7f0] text-[#10b981]'
-                      : 'bg-[#f3f5f4] hover:bg-[#e8ebea] text-[#111827]'
+                      : 'bg-white border border-gray-200 text-gray-600 hover:text-gray-900 hover:border-gray-300'
                   }`}
                 >
                   {joined ? 'Joined' : 'Join'}

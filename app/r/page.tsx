@@ -43,7 +43,7 @@ export default async function RedditHomePage(props: {
   ];
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 items-start font-sans">
+    <div className="flex flex-col lg:flex-row gap-8 items-start font-sans">
       {/* Column 1: Left Navigation Sidebar */}
       <RedditSidebar communities={communities} />
 

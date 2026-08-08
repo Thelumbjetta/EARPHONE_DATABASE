@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import CreateCommunityModal from './CreateCommunityModal';
@@ -21,6 +21,31 @@ export default function RedditSidebar({ communities }: { communities: CommunityI
   const { showToast } = useToast();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'popular' | 'all' | 'saved' | 'history'>('popular');
+  const [trendingTags, setTrendingTags] = useState<{tag: string, count: number}[]>([]);
+
+  useEffect(() => {
+    async function loadTrending() {
+      try {
+        const res = await fetch('/api/trending');
+        if (res.ok) {
+          const data = await res.json();
+          // Fallback if DB is empty
+          if (data.length === 0) {
+            setTrendingTags([
+              { tag: '#IEMs', count: 24800 },
+              { tag: '#ChiFi', count: 18200 },
+              { tag: '#DACs', count: 12500 }
+            ]);
+          } else {
+            setTrendingTags(data);
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to load trending tags:', err);
+      }
+    }
+    loadTrending();
+  }, []);
 
   const handleTrendingClick = (tag: string) => {
     showToast(`Filtering posts by tag ${tag}`, 'info');
@@ -104,20 +129,18 @@ export default function RedditSidebar({ communities }: { communities: CommunityI
           <span>Trending Today</span>
         </h3>
 
-        <div className="space-y-3">
-          {[
-            { tag: '#IEMs', count: '24.8k posts this week' },
-            { tag: '#ChiFi', count: '18.2k posts this week' },
-            { tag: '#DACs', count: '12.5k posts this week' },
-            { tag: '#Flagship', count: '9.1k posts this week' },
-            { tag: '#FrequencyResponse', count: '15.3k posts this week' },
-          ].map((item) => (
-            <div key={item.tag} onClick={() => handleTrendingClick(item.tag)}>
-              <span className="text-xs font-bold text-[#10b981] block hover:underline cursor-pointer transition-all duration-200 ease-in-out">
+        <div className="space-y-0.5">
+          {trendingTags.map((item) => (
+            <div 
+              key={item.tag} 
+              onClick={() => handleTrendingClick(item.tag)}
+              className="px-3 py-2 -mx-3 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer"
+            >
+              <span className="text-xs font-bold text-[#10b981] block">
                 {item.tag}
               </span>
-              <span className="text-[11px] text-gray-400 font-normal">
-                {item.count}
+              <span className="text-[10px] text-gray-400 font-normal">
+                {item.count > 1000 ? (item.count / 1000).toFixed(1) + 'k' : item.count} posts this week
               </span>
             </div>
           ))}
