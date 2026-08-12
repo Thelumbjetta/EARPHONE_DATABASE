@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { ChevronUp, ChevronDown, MessageSquare, Share2, Bookmark, Check } from 'lucide-react';
 import { useToast } from './Toast';
+import LoginModal from './LoginModal';
 
 export type PostCardProps = {
   post: {
@@ -32,13 +33,20 @@ export default function PostCard({ post }: PostCardProps) {
   const [score, setScore] = useState<number>(post.score || 0);
   const [isVoting, setIsVoting] = useState<boolean>(false);
   const [isSaved, setIsSaved] = useState<boolean>(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [loginModalMessage, setLoginModalMessage] = useState('');
+
+  const requireAuth = (message: string) => {
+    setLoginModalMessage(message);
+    setShowLoginModal(true);
+  };
 
   const handleVote = async (e: React.MouseEvent, targetVote: number) => {
     e.preventDefault();
     e.stopPropagation();
 
     if (!session) {
-      showToast('Please sign in to vote!', 'info');
+      requireAuth('Sign in to upvote or downvote posts');
       return;
     }
 
@@ -120,13 +128,23 @@ export default function PostCard({ post }: PostCardProps) {
   const handleSave = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (!session) {
+      requireAuth('Sign in to save posts');
+      return;
+    }
     const nextSaved = !isSaved;
     setIsSaved(nextSaved);
     showToast(nextSaved ? 'Post saved to your collection!' : 'Post removed from saved', 'info');
   };
 
   return (
-    <div className="group bg-white border border-[#eaefec] rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 ease-in-out flex mb-4 font-sans">
+    <>
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        message={loginModalMessage}
+      />
+      <div className="group bg-white border border-[#eaefec] rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 ease-in-out flex mb-4 font-sans">
       {/* Left Upvote / Downvote Bar */}
       <div className="bg-[#f8faf9] w-12 sm:w-14 flex flex-col items-center py-3.5 px-1 flex-shrink-0 select-none border-r border-[#eaefec] justify-start gap-1">
         {/* Upvote Button */}
@@ -255,5 +273,6 @@ export default function PostCard({ post }: PostCardProps) {
         </div>
       </div>
     </div>
+    </>
   );
 }

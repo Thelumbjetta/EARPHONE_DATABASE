@@ -22,100 +22,53 @@ export type ConversationPartner = {
   unread_count: number;
 };
 
-// Fallback memory state for offline DB
-const FALLBACK_MESSAGES: DirectMessage[] = [
-  {
-    id: 1,
-    sender_id: 2,
-    sender_username: 'crin_listener',
-    sender_avatar: null,
-    receiver_id: 1,
-    receiver_username: 'alex_dev',
-    receiver_avatar: null,
-    content: 'Hey Alex! Have you tried the Moondrop Blessing 3 Dusk tuning yet?',
-    created_at: new Date(Date.now() - 3600 * 1000).toISOString(),
-    is_read: true,
-  },
-  {
-    id: 2,
-    sender_id: 1,
-    sender_username: 'alex_dev',
-    sender_avatar: null,
-    receiver_id: 2,
-    receiver_username: 'crin_listener',
-    receiver_avatar: null,
-    content: 'Yes! The pinna gain adjustment is super clean. Bass shelf is crisp.',
-    created_at: new Date(Date.now() - 1800 * 1000).toISOString(),
-    is_read: true,
-  },
-  {
-    id: 3,
-    sender_id: 3,
-    sender_username: 'cable_artisan',
-    sender_avatar: null,
-    receiver_id: 1,
-    receiver_username: 'alex_dev',
-    receiver_avatar: null,
-    content: 'Your custom 4.4mm balanced cable order has shipped!',
-    created_at: new Date(Date.now() - 7200 * 1000).toISOString(),
-    is_read: false,
-  },
-];
+// ZERO FALLBACK POLICY: No fake messages are ever served.
+// If the DB is empty or unavailable, return empty arrays.
 
 export async function sendMessage(senderId: number, receiverUsername: string, content: string): Promise<DirectMessage> {
-  try {
-    // 1. Ensure table exists
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS messages (
-        id SERIAL PRIMARY KEY,
-        sender_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        receiver_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        content TEXT NOT NULL,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-        is_read BOOLEAN DEFAULT FALSE
-      );
-    `);
+  // 1. Ensure table exists
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS messages (
+      id SERIAL PRIMARY KEY,
+      sender_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      receiver_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      content TEXT NOT NULL,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      is_read BOOLEAN DEFAULT FALSE
+    );
+  `);
 
-    // 2. Find receiver user ID
-    let receiverRes = await pool.query<{ id: number; username: string }>('SELECT id, username FROM users WHERE username = $1', [receiverUsername]);
-    let receiverId = receiverRes.rows[0]?.id;
-
-    if (!receiverId) {
-      // If user not found, create dev fallback user
-      const newRec = await pool.query<{ id: number }>('INSERT INTO users (username, email, password_hash, karma) VALUES ($1, $2, $3, 100) ON CONFLICT DO NOTHING RETURNING id', [
-        receiverUsername,
-        `${receiverUsername}@audiothread.com`,
-        'hash123',
-      ]);
-      receiverId = newRec.rows[0]?.id || 2;
-    }
-
-    const insertRes = await pool.query<DirectMessage>(`
-      INSERT INTO messages (sender_id, receiver_id, content)
-      VALUES ($1, $2, $3)
-      RETURNING id, sender_id, receiver_id, content, created_at, is_read
-    `, [senderId, receiverId, content]);
-
-    const msg = insertRes.rows[0];
-    msg.sender_username = 'alex_dev';
-    msg.receiver_username = receiverUsername;
-
-    return msg;
-  } catch (err) {
-    console.warn('DB sendMessage fallback triggered:', err);
-    const newMsg: DirectMessage = {
-      id: Date.now(),
-      sender_id: senderId,
-      sender_username: 'alex_dev',
-      receiver_id: 99,
-      receiver_username: receiverUsername,
-      content,
-      created_at: new Date().toISOString(),
-      is_read: false,
-    };
-    FALLBACK_MESSAGES.push(newMsg);
-    return newMsg;
+  // 2. Find receiver — throw if not found (no fake user creation)
+  const receiverRes = await pool.query<{ id: number; username: string }>(
+    'SELECT id, username FROM users WHERE username = $1',
+    [receiverUsername]
+  );
+  const receiver = receiverRes.rows[0];
+  if (!receiver) {
+    throw new Error(`User "${receiverUsername}" not found.`);
   }
+
+  // 3. Insert message
+  const insertRes = await pool.query<{ id: number; sender_id: number; receiver_id: number; content: string; created_at: string; is_read: boolean }>(`
+    INSERT INTO messages (sender_id, receiver_id, content)
+    VALUES ($1, $2, $3)
+    RETURNING id, sender_id, receiver_id, content, created_at, is_read
+  `, [senderId, receiver.id, content]);
+
+  // 4. Fetch sender username for the return object
+  const senderRes = await pool.query<{ username: string; avatar_url: string | null }>(
+    'SELECT username, avatar_url FROM users WHERE id = $1',
+    [senderId]
+  );
+
+  const msg = insertRes.rows[0];
+  return {
+    ...msg,
+    sender_username: senderRes.rows[0]?.username || '',
+    sender_avatar: senderRes.rows[0]?.avatar_url || null,
+    receiver_username: receiver.username,
+    receiver_avatar: null,
+  };
 }
 
 export async function getConversations(userId: number): Promise<ConversationPartner[]> {
@@ -142,7 +95,6 @@ export async function getConversations(userId: number): Promise<ConversationPart
       ORDER BY m.created_at DESC
     `, [userId]);
 
-    // Unique by partner_id
     const map = new Map<number, ConversationPartner>();
     for (const row of res.rows) {
       if (!map.has(row.partner_id)) {
@@ -158,25 +110,8 @@ export async function getConversations(userId: number): Promise<ConversationPart
     }
     return Array.from(map.values());
   } catch (err) {
-    console.warn('DB getConversations fallback triggered:', err);
-    return [
-      {
-        user_id: 2,
-        username: 'crin_listener',
-        avatar_url: null,
-        last_message: 'Yes! The pinna gain adjustment is super clean. Bass shelf is crisp.',
-        last_message_at: new Date(Date.now() - 1800 * 1000).toISOString(),
-        unread_count: 0,
-      },
-      {
-        user_id: 3,
-        username: 'cable_artisan',
-        avatar_url: null,
-        last_message: 'Your custom 4.4mm balanced cable order has shipped!',
-        last_message_at: new Date(Date.now() - 7200 * 1000).toISOString(),
-        unread_count: 1,
-      },
-    ];
+    console.warn('[getConversations] DB query failed, returning empty list:', err);
+    return [];
   }
 }
 
@@ -204,11 +139,7 @@ export async function getDirectMessages(userId: number, withUsername: string): P
 
     return res.rows;
   } catch (err) {
-    console.warn('DB getDirectMessages fallback triggered:', err);
-    return FALLBACK_MESSAGES.filter(
-      (m) =>
-        (m.sender_username === 'alex_dev' && m.receiver_username === withUsername) ||
-        (m.sender_username === withUsername && m.receiver_username === 'alex_dev')
-    );
+    console.warn('[getDirectMessages] DB query failed, returning empty list:', err);
+    return [];
   }
 }

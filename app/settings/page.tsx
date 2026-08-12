@@ -17,17 +17,17 @@ export default function SettingsPage() {
   const [editing, setEditing] = useState<EditState>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Editable state for each setting
-  const [email, setEmail] = useState(session?.user?.email || 'alex@audiothread.com');
-  const [displayName, setDisplayName] = useState(session?.user?.name || 'Alex Dev');
-  const [bio, setBio] = useState('Moondrop Blessing 3 • iFi Gryphon');
-  const [country, setCountry] = useState('United States');
+  // Editable state — seeded from session only, never from fake defaults
+  const [email, setEmail] = useState(session?.user?.email || '');
+  const [displayName, setDisplayName] = useState(session?.user?.name || '');
+  const [bio, setBio] = useState('');
+  const [country, setCountry] = useState('');
   const [dmPermission, setDmPermission] = useState<'everyone' | 'followers' | 'nobody'>('everyone');
   const [showOnlineStatus, setShowOnlineStatus] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [postReplies, setPostReplies] = useState(true);
 
-  const username = session?.user?.name || 'alex_dev';
+  const username = session?.user?.name || '';
 
   const startEdit = (field: string, currentValue: string) => {
     setEditing({ field, value: currentValue });

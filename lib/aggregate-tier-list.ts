@@ -3,6 +3,9 @@
  * =============================================================
  * Consensus Aggregation Engine for Crowdsourced Community Tier Lists
  * =============================================================
+ * ZERO FALLBACK POLICY: If the database returns no data, the UI
+ * receives an empty consensus object. No fake gear is ever served.
+ * =============================================================
  */
 
 import pool from '@/lib/db';
@@ -38,59 +41,14 @@ export type CommunityTierListConsensus = {
   rankings: AggregatedGearItem[];
 };
 
-const FALLBACK_GEAR_RANKINGS: AggregatedGearItem[] = [
-  {
-    gear_id: 1,
-    brand: 'Moondrop',
-    model: 'Blessing 3',
-    price: 319,
-    category: 'IEM',
-    driver_type: '2DD + 4BA Hybrid',
-    graph_url: 'https://crinacle.com/graphs/iems/graphtool/?share=Blessing_3',
-    avg_bass: 9.2,
-    avg_mids: 9.5,
-    avg_treble: 9.3,
-    avg_tonality: 9.5,
-    avg_technicality: 9.4,
-    total_score: 9.4,
-    rating_count: 84,
-    tier: 'S',
-  },
-  {
-    gear_id: 2,
-    brand: 'Sennheiser',
-    model: 'IE 600',
-    price: 699,
-    category: 'IEM',
-    driver_type: '7mm TrueResponse Dynamic',
-    graph_url: 'https://crinacle.com/graphs/iems/graphtool/?share=IE600',
-    avg_bass: 9.4,
-    avg_mids: 9.0,
-    avg_treble: 9.2,
-    avg_tonality: 9.2,
-    avg_technicality: 9.1,
-    total_score: 9.1,
-    rating_count: 62,
-    tier: 'S',
-  },
-  {
-    gear_id: 3,
-    brand: 'Thieaudio',
-    model: 'Monarch MKIII',
-    price: 999,
-    category: 'IEM',
-    driver_type: '2DD + 6BA + 2EST Tribrid',
-    graph_url: 'https://crinacle.com/graphs/iems/graphtool/?share=Monarch_MK3',
-    avg_bass: 9.5,
-    avg_mids: 8.8,
-    avg_treble: 9.0,
-    avg_tonality: 8.9,
-    avg_technicality: 9.3,
-    total_score: 8.9,
-    rating_count: 45,
-    tier: 'A',
-  },
-];
+// Empty consensus — returned when DB has no data or throws.
+// The UI must render a proper empty state instead of fake data.
+const EMPTY_CONSENSUS = (slug: string): CommunityTierListConsensus => ({
+  community_slug: slug,
+  total_ratings: 0,
+  tiers: { S: [], A: [], B: [], C: [], D: [] },
+  rankings: [],
+});
 
 export async function aggregateCommunityTierList(communitySlug: string): Promise<CommunityTierListConsensus> {
   try {
@@ -148,7 +106,7 @@ export async function aggregateCommunityTierList(communitySlug: string): Promise
           avg_tonality: row.avg_tonality || score,
           avg_technicality: row.avg_technicality || score,
           total_score: score,
-          rating_count: row.rating_count || 1,
+          rating_count: row.rating_count || 0,
           tier,
         };
       });
@@ -171,21 +129,9 @@ export async function aggregateCommunityTierList(communitySlug: string): Promise
       };
     }
   } catch (err) {
-    console.warn('aggregateCommunityTierList failed, returning fallback gear rankings:', err);
+    console.warn('[aggregateCommunityTierList] DB query failed, returning empty consensus:', err);
   }
 
-  const tiers: CommunityTierListConsensus['tiers'] = {
-    S: FALLBACK_GEAR_RANKINGS.filter((i) => i.tier === 'S'),
-    A: FALLBACK_GEAR_RANKINGS.filter((i) => i.tier === 'A'),
-    B: FALLBACK_GEAR_RANKINGS.filter((i) => i.tier === 'B'),
-    C: [],
-    D: [],
-  };
-
-  return {
-    community_slug: communitySlug,
-    total_ratings: 191,
-    tiers,
-    rankings: FALLBACK_GEAR_RANKINGS,
-  };
+  // DB error or empty result → return empty, never fake data
+  return EMPTY_CONSENSUS(communitySlug);
 }

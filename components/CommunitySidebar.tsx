@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react';
 import { Headphones, Radio, Zap, Volume2, TrendingUp, BarChart2, Check, Plus, ArrowRight } from 'lucide-react';
 import KarmaGraphModal from './KarmaGraphModal';
 import { useToast } from './Toast';
+import LoginModal from './LoginModal';
 
 type CommunityDetail = {
   id?: number;
@@ -39,6 +40,7 @@ export default function CommunitySidebar({ community }: { community?: CommunityD
   const [loadingTierList, setLoadingTierList] = useState(true);
   const [isKarmaModalOpen, setIsKarmaModalOpen] = useState(false);
   const [popularCommunities, setPopularCommunities] = useState<CommunityDetail[]>([]);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   const activeSlug = community?.slug || 'audiophile';
 
@@ -96,6 +98,10 @@ export default function CommunitySidebar({ community }: { community?: CommunityD
   }, [activeSlug]);
 
   const toggleJoinSub = (name: string) => {
+    if (!session) {
+      setShowLoginModal(true);
+      return;
+    }
     const isNowJoined = !joinedSubs[name];
     setJoinedSubs((prev) => ({ ...prev, [name]: isNowJoined }));
     showToast(isNowJoined ? `Joined ${name}` : `Left ${name}`, isNowJoined ? 'success' : 'info');
@@ -107,7 +113,13 @@ export default function CommunitySidebar({ community }: { community?: CommunityD
   };
 
   return (
-    <aside className="w-full lg:w-80 flex-shrink-0 space-y-4 font-sans lg:sticky lg:top-20">
+    <>
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        message="Sign in to join communities"
+      />
+      <aside className="w-full lg:w-80 flex-shrink-0 space-y-4 font-sans lg:sticky lg:top-20">
       {/* "Your Daily Stats" Card */}
       <div className="bg-white border border-[#eaefec] rounded-2xl p-5 shadow-sm space-y-4">
         <h3 className="text-xs font-bold text-[#111827] flex items-center gap-1.5">
@@ -235,6 +247,12 @@ export default function CommunitySidebar({ community }: { community?: CommunityD
               <div className="h-10 bg-[#f8faf9] rounded-xl animate-pulse" />
               <div className="h-10 bg-[#f8faf9] rounded-xl animate-pulse" />
             </div>
+          ) : topRankings.length === 0 ? (
+            <div className="py-4 text-center">
+              <p className="text-xs text-gray-400 font-sans">
+                Not enough votes to form a consensus yet.
+              </p>
+            </div>
           ) : (
             topRankings.map((item, idx) => (
               <div
@@ -296,5 +314,6 @@ export default function CommunitySidebar({ community }: { community?: CommunityD
         </div>
       )}
     </aside>
+    </>
   );
 }

@@ -40,6 +40,7 @@ declare module 'next-auth' {
       name?: string | null;
       email?: string | null;
       image?: string | null;
+      username?: string | null;
     };
   }
 }
@@ -209,6 +210,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async session({ session, user }) {
       if (user && session.user) {
         session.user.id = user.id;
+        session.user.username = (user as any).username;
       }
       return session;
     },
