@@ -50,128 +50,13 @@ export type UserNotification = {
   created_at: Date;
 };
 
-const FALLBACK_COMMUNITIES: Community[] = [
-  {
-    id: 1,
-    name: 'r/audiophile',
-    slug: 'audiophile',
-    description: 'High-end audio equipment, stereo setups, sound science, measurement charts, and acoustic impressions.',
-    created_by_user_id: 1,
-    banner_url: null,
-    icon_url: null,
-    member_count: 3200000,
-    created_at: new Date(),
-  },
-  {
-    id: 2,
-    name: 'r/iem',
-    slug: 'iem',
-    description: 'In-Ear Monitors (IEMs), custom molds, frequency response graphs, pinna compensation, and portable gear.',
-    created_by_user_id: 1,
-    banner_url: null,
-    icon_url: null,
-    member_count: 1800000,
-    created_at: new Date(),
-  },
-  {
-    id: 3,
-    name: 'r/budgettier',
-    slug: 'budgettier',
-    description: 'Best bang-for-buck audio equipment under $100. Chi-fi gems, budget DACs, and giant-killers.',
-    created_by_user_id: 1,
-    banner_url: null,
-    icon_url: null,
-    member_count: 850000,
-    created_at: new Date(),
-  },
-  {
-    id: 4,
-    name: 'r/headphonezone',
-    slug: 'headphonezone',
-    description: 'Over-ear headphones, planar magnetics, tube amps, and high-fidelity listening impressions.',
-    created_by_user_id: 1,
-    banner_url: null,
-    icon_url: null,
-    member_count: 1100000,
-    created_at: new Date(),
-  },
-];
+// No fallback communities — data must come from the database only.
+// If the DB is empty, the UI renders an empty state.
+const FALLBACK_COMMUNITIES: Community[] = [];
 
-const FALLBACK_POSTS: RedditPost[] = [
-  {
-    id: 101,
-    title: 'Moondrop Blessing 3 vs Dusk: Tuning Impressions & Frequency Measurement Comparison',
-    body: "After spending 3 weeks evaluating both sets on an iFi Gryphon DAC, I have some strong impressions on pinna gain alignment and sub-bass shelf extension. The dual dynamic driver bass texture is immense, but the treble transition is definitely energetic. Let's discuss your tuning preferences...",
-    score: 1200,
-    view_count: 5400,
-    created_at: new Date(Date.now() - 2 * 3600 * 1000),
-    updated_at: new Date(),
-    user_id: 1,
-    author_username: 'crin_listener',
-    author_avatar: null,
-    community_id: 1,
-    community_name: 'r/audiophile',
-    community_slug: 'audiophile',
-    community_icon: null,
-    comment_count: 184,
-    user_vote: 0,
-  },
-  {
-    id: 102,
-    title: 'Showcase: Custom IEM cable crafting with 8-core OCC silver-plated copper wire.',
-    body: 'Hand-braided modular 4.4mm balanced cable termination for my flagship tribrids.',
-    score: 643,
-    view_count: 3200,
-    created_at: new Date(Date.now() - 4 * 3600 * 1000),
-    updated_at: new Date(),
-    user_id: 2,
-    author_username: 'cable_artisan',
-    author_avatar: null,
-    community_id: 2,
-    community_name: 'r/iem',
-    community_slug: 'iem',
-    community_icon: null,
-    comment_count: 42,
-    user_vote: 0,
-    media_urls: ['/cyber_dashboard.png'],
-  },
-  {
-    id: 103,
-    title: 'Why a solid $50 USB-C Dongle DAC is all you need for portable IEM driving in 2026.',
-    body: 'With the maturity of CS43198 and ESS Sabre dual DAC chips delivering 120dB SINAD in tiny dongle forms, dragging a 300g brick amp for IEMs is becoming harder to justify.',
-    score: 329,
-    view_count: 1800,
-    created_at: new Date(Date.now() - 6 * 3600 * 1000),
-    updated_at: new Date(),
-    user_id: 3,
-    author_username: 'sound_purist',
-    author_avatar: null,
-    community_id: 3,
-    community_name: 'r/budgettier',
-    community_slug: 'budgettier',
-    community_icon: null,
-    comment_count: 95,
-    user_vote: 0,
-  },
-  {
-    id: 104,
-    title: 'Is planar magnetic technology replacing dynamic drivers in mid-fi IEMs?',
-    body: 'We mapped distortion, transient response speed, and EQ flexibility across 50 test runs comparing 14.5mm planar drivers to 10mm Beryllium dynamics. The results surprised us.',
-    score: 2400,
-    view_count: 9800,
-    created_at: new Date(Date.now() - 9 * 3600 * 1000),
-    updated_at: new Date(),
-    user_id: 4,
-    author_username: 'acoustic_wave',
-    author_avatar: null,
-    community_id: 4,
-    community_name: 'r/headphonezone',
-    community_slug: 'headphonezone',
-    community_icon: null,
-    comment_count: 210,
-    user_vote: -1,
-  },
-];
+// No fallback posts — data must come from the database only.
+// If the DB is empty, the UI renders an empty state.
+const FALLBACK_POSTS: RedditPost[] = [];
 
 // ── Communities Queries ──────────────────────────────────────────────────────
 
@@ -478,8 +363,9 @@ export async function createReplyNotification(params: {
 }
 
 export async function getUserStats(userId?: number): Promise<{ karma: number; view_count: number; upvotes: number }> {
+  // Not logged in → return real zeros, not fake numbers
   if (!userId) {
-    return { karma: 12400, view_count: 2400, upvotes: 418 };
+    return { karma: 0, view_count: 0, upvotes: 0 };
   }
   try {
     const res = await pool.query<{ karma: number; total_views: string; total_upvotes: string }>(`
@@ -496,13 +382,14 @@ export async function getUserStats(userId?: number): Promise<{ karma: number; vi
 
     if (res.rows[0]) {
       return {
-        karma: res.rows[0].karma || 12400,
-        view_count: parseInt(res.rows[0].total_views || '0', 10) || 2400,
-        upvotes: parseInt(res.rows[0].total_upvotes || '0', 10) || 418,
+        karma: res.rows[0].karma ?? 0,
+        view_count: parseInt(res.rows[0].total_views || '0', 10),
+        upvotes: parseInt(res.rows[0].total_upvotes || '0', 10),
       };
     }
   } catch (err) {
     console.warn('getUserStats DB query failed:', err);
   }
-  return { karma: 12400, view_count: 2400, upvotes: 418 };
+  // DB error → return real zeros, not fake numbers
+  return { karma: 0, view_count: 0, upvotes: 0 };
 }

@@ -29,16 +29,8 @@ export default function RedditSidebar({ communities }: { communities: CommunityI
         const res = await fetch('/api/trending');
         if (res.ok) {
           const data = await res.json();
-          // Fallback if DB is empty
-          if (data.length === 0) {
-            setTrendingTags([
-              { tag: '#IEMs', count: 24800 },
-              { tag: '#ChiFi', count: 18200 },
-              { tag: '#DACs', count: 12500 }
-            ]);
-          } else {
-            setTrendingTags(data);
-          }
+          // Strictly use DB data — no fabricated fallback
+          setTrendingTags(Array.isArray(data) ? data : []);
         }
       } catch (err) {
         console.warn('Failed to load trending tags:', err);
@@ -130,20 +122,28 @@ export default function RedditSidebar({ communities }: { communities: CommunityI
         </h3>
 
         <div className="space-y-0.5">
-          {trendingTags.map((item) => (
-            <div 
-              key={item.tag} 
-              onClick={() => handleTrendingClick(item.tag)}
-              className="px-3 py-2 -mx-3 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer"
-            >
-              <span className="text-xs font-bold text-[#10b981] block">
-                {item.tag}
-              </span>
-              <span className="text-[10px] text-gray-400 font-normal">
-                {item.count > 1000 ? (item.count / 1000).toFixed(1) + 'k' : item.count} posts this week
-              </span>
+          {trendingTags.length === 0 ? (
+            <div className="py-3 text-center">
+              <p className="text-xs text-gray-400 font-sans italic">
+                No trending topics today.
+              </p>
             </div>
-          ))}
+          ) : (
+            trendingTags.map((item) => (
+              <div 
+                key={item.tag} 
+                onClick={() => handleTrendingClick(item.tag)}
+                className="px-3 py-2 -mx-3 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer"
+              >
+                <span className="text-xs font-bold text-[#10b981] block">
+                  {item.tag}
+                </span>
+                <span className="text-[10px] text-gray-400 font-normal">
+                  {item.count > 1000 ? (item.count / 1000).toFixed(1) + 'k' : item.count} posts this week
+                </span>
+              </div>
+            ))
+          )}
         </div>
       </div>
 

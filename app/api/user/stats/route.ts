@@ -10,6 +10,7 @@ export async function GET() {
     return NextResponse.json(stats);
   } catch (error) {
     console.error('[GET /api/user/stats] Error:', error);
-    return NextResponse.json({ karma: 12400, view_count: 2400, upvotes: 418 });
+    return NextResponse.json({ karma: 0, view_count: 0, upvotes: 0 });
+
   }
 }

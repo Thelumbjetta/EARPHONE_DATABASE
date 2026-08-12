@@ -19,9 +19,11 @@ import { User, Settings, LogOut, Search, Plus, AudioWaveform, ChevronDown, Layer
 export default function Navbar() {
   const { data: session } = useSession();
   const user = session?.user;
-  const username = user?.name || 'alex_dev';
+  const username = user?.name;
+
   
-  const [karma, setKarma] = useState<number>(12400);
+  const [karma, setKarma] = useState<number>(0);
+
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -134,14 +136,16 @@ export default function Navbar() {
                   className="w-full h-full object-cover"
                 />
               </div>
-              <div className="hidden sm:flex flex-col text-left leading-tight">
-                <span className="text-xs font-bold text-[#111827] truncate max-w-[110px]">
-                  u/{username}
-                </span>
-                <span className="text-[11px] font-bold text-[#10b981] font-sans">
-                  {formatKarma(karma)}
-                </span>
-              </div>
+              {username && (
+                <div className="hidden sm:flex flex-col text-left leading-tight">
+                  <span className="text-xs font-bold text-[#111827] truncate max-w-[110px]">
+                    u/{username}
+                  </span>
+                  <span className="text-[11px] font-bold text-[#10b981] font-sans">
+                    {formatKarma(karma)}
+                  </span>
+                </div>
+              )}
               <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
             </button>
 
@@ -149,13 +153,13 @@ export default function Navbar() {
             {isDropdownOpen && (
               <div className="absolute right-0 mt-2 w-52 bg-white border border-[#eaefec] rounded-2xl shadow-xl py-2 z-50 animate-in fade-in duration-150 font-sans">
                 <div className="px-4 py-2 border-b border-[#eaefec]">
-                  <p className="text-xs font-bold text-[#111827]">u/{username}</p>
+                  <p className="text-xs font-bold text-[#111827]">{username ? `u/${username}` : 'Signed in'}</p>
                   <p className="text-[11px] text-[#10b981] font-semibold">{formatKarma(karma)}</p>
                 </div>
 
                 <div className="py-1">
                   <Link
-                    href={`/u/${username}`}
+                    href={username ? `/u/${username}` : '/settings'}
                     onClick={() => setIsDropdownOpen(false)}
                     className="flex items-center gap-2.5 px-4 py-2 text-xs font-bold text-[#111827] hover:bg-[#e6f7f0] hover:text-[#10b981] transition-colors"
                   >

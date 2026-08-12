@@ -32,7 +32,8 @@ export default function CommunitySidebar({ community }: { community?: CommunityD
   const { data: session } = useSession();
   const { showToast } = useToast();
 
-  const [stats, setStats] = useState({ karma: 12400, view_count: 2400, upvotes: 418 });
+  const [stats, setStats] = useState({ karma: 0, view_count: 0, upvotes: 0 });
+
   const [joinedSubs, setJoinedSubs] = useState<Record<string, boolean>>({});
   const [topRankings, setTopRankings] = useState<MiniGearItem[]>([]);
   const [loadingTierList, setLoadingTierList] = useState(true);
@@ -152,42 +153,53 @@ export default function CommunitySidebar({ community }: { community?: CommunityD
         </div>
 
         <div className="space-y-0.5">
-          {popularCommunities.map((c) => {
-            const joined = !!joinedSubs[c.name || ''];
-            return (
-              <div key={c.slug} className="flex items-center justify-between px-3 py-2.5 -mx-3 rounded-xl hover:bg-gray-50 transition-colors">
-                <Link href={`/r/${c.slug}`} className="flex items-center gap-3 group flex-1">
-                  <div className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center font-bold text-xs text-gray-500 overflow-hidden">
-                    {c.icon_url ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img src={c.icon_url} alt={c.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="uppercase">{c.name?.replace('r/', '').charAt(0)}</span>
-                    )}
-                  </div>
-                  <div>
-                    <span className="font-bold text-xs text-[#111827] block group-hover:text-[#10b981] transition-colors">
-                      {c.name}
-                    </span>
-                    <span className="text-[10px] text-gray-400 font-normal">
-                      {formatNumber(c.member_count || 1)} members
-                    </span>
-                  </div>
-                </Link>
+          {popularCommunities.length === 0 ? (
+            <div className="py-4 text-center">
+              <p className="text-xs text-gray-400 font-sans">
+                No communities yet.<br />
+                <a href="/r/all" className="text-[#10b981] font-semibold hover:underline">
+                  Create the first one!
+                </a>
+              </p>
+            </div>
+          ) : (
+            popularCommunities.map((c) => {
+              const joined = !!joinedSubs[c.name || ''];
+              return (
+                <div key={c.slug} className="flex items-center justify-between px-3 py-2.5 -mx-3 rounded-xl hover:bg-gray-50 transition-colors">
+                  <Link href={`/r/${c.slug}`} className="flex items-center gap-3 group flex-1">
+                    <div className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center font-bold text-xs text-gray-500 overflow-hidden">
+                      {c.icon_url ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img src={c.icon_url} alt={c.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="uppercase">{c.name?.replace('r/', '').charAt(0)}</span>
+                      )}
+                    </div>
+                    <div>
+                      <span className="font-bold text-xs text-[#111827] block group-hover:text-[#10b981] transition-colors">
+                        {c.name}
+                      </span>
+                      <span className="text-[10px] text-gray-400 font-normal">
+                        {formatNumber(c.member_count ?? 0)} members
+                      </span>
+                    </div>
+                  </Link>
 
-                <button
-                  onClick={() => toggleJoinSub(c.name || '')}
-                  className={`text-[10px] font-bold px-3 py-1.5 rounded-full transition-colors cursor-pointer ${
-                    joined
-                      ? 'bg-[#e6f7f0] text-[#10b981]'
-                      : 'bg-white border border-gray-200 text-gray-600 hover:text-gray-900 hover:border-gray-300'
-                  }`}
-                >
-                  {joined ? 'Joined' : 'Join'}
-                </button>
-              </div>
-            );
-          })}
+                  <button
+                    onClick={() => toggleJoinSub(c.name || '')}
+                    className={`text-[10px] font-bold px-3 py-1.5 rounded-full transition-colors cursor-pointer ${
+                      joined
+                        ? 'bg-[#e6f7f0] text-[#10b981]'
+                        : 'bg-white border border-gray-200 text-gray-600 hover:text-gray-900 hover:border-gray-300'
+                    }`}
+                  >
+                    {joined ? 'Joined' : 'Join'}
+                  </button>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
 
@@ -279,7 +291,7 @@ export default function CommunitySidebar({ community }: { community?: CommunityD
             {community.description || 'Official community hub & gear rankings.'}
           </p>
           <div className="text-xs font-bold text-[#10b981]">
-            {(community.member_count || 1200).toLocaleString()} members
+            {(community.member_count ?? 0).toLocaleString()} members
           </div>
         </div>
       )}
