@@ -35,9 +35,17 @@ The application is built on a modern React stack:
 Create a `.env.local` file in the root directory and configure the following variables:
 
 ```env
+# PostgreSQL Database
 DATABASE_URL="postgres://user:password@host:port/database"
+
+# NextAuth Configuration
 NEXTAUTH_SECRET="your_nextauth_secret"
 NEXTAUTH_URL="http://localhost:3000"
+
+# Email Authentication (Magic Link)
+# We use direct SSL (smtps://) on port 465 for providers like Resend.
+EMAIL_SERVER="smtps://resend:YOUR_RESEND_API_KEY@smtp.resend.com:465"
+EMAIL_FROM="noreply@yourdomain.com"
 ```
 
 ### Installation
