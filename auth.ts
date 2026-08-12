@@ -51,10 +51,11 @@ declare module 'next-auth' {
 // no secrets are hardcoded here.
 //
 // Supported configurations (set in .env.local):
-//   EMAIL_SERVER=smtp://user:pass@smtp.example.com:587
+//   EMAIL_SERVER=smtps://user:pass@smtp.example.com:465
 //   EMAIL_FROM=noreply@yourdomain.com
 //
-// For Resend: EMAIL_SERVER=smtp://resend:YOUR_RESEND_KEY@smtp.resend.com:465
+// For Resend: EMAIL_SERVER=smtps://resend:YOUR_RESEND_KEY@smtp.resend.com:465
+//   (uses smtps:// for direct SSL on port 465 — NOT smtp:// which is STARTTLS)
 // For Gmail:  EMAIL_SERVER=smtp://you@gmail.com:APP_PASSWORD@smtp.gmail.com:587
 // ──────────────────────────────────────────────────────────────────────────────
 const transport = nodemailer.createTransport(
